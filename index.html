@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>虹桥枢纽交通方式对比工具 · 私家车步行时间显示“-”</title>
+    <title>虹桥枢纽交通方式对比工具 · 完全修复版</title>
     
-    <!-- 高德地图 JS API v2 -->
+    <!-- 高德地图 JS API v2 - 确保插件正确加载 -->
     <script src="https://webapi.amap.com/maps?v=2.0&key=15b581287108b2ce589abef0697aaa37&plugin=AMap.Geocoder,AMap.ToolBar,AMap.Scale,AMap.Autocomplete,AMap.PlaceSearch"></script>
     
     <style>
@@ -120,15 +120,16 @@
             transform: translateX(-50%);
             width: 70%;
             max-width: 500px;
-            z-index: 150;
+            z-index: 999; /* 提高层级 */
             background: white;
             border-radius: 30px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
             display: flex;
             align-items: center;
             padding: 5px 5px 5px 20px;
             backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.8);
+            pointer-events: auto; /* 确保可点击 */
         }
         .map-search-bar input {
             flex: 1;
@@ -152,9 +153,7 @@
             box-shadow: none;
             transform: none;
             align-self: center;
-        }
-        .map-search-bar button:hover {
-            background: #0056b3;
+            flex-shrink: 0;
         }
         .map-tip {
             position: absolute; 
@@ -164,7 +163,7 @@
             padding: 10px 18px; 
             border-radius: 30px; 
             font-size: 13px; 
-            z-index: 130; 
+            z-index: 800; 
             box-shadow: 0 3px 12px rgba(0,0,0,0.1); 
             border-left: 4px solid #007bff;
             backdrop-filter: blur(5px);
@@ -179,8 +178,8 @@
             max-width: 500px;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-            z-index: 160;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+            z-index: 1000;
             max-height: 250px;
             overflow-y: auto;
             display: none;
@@ -297,14 +296,14 @@
 <body>
 <div class="container">
     <h1>虹桥枢纽交通方式对比分析工具</h1>
-    <p class="subtitle">点击地图选择<strong>起点</strong> / 搜索栏快速定位（仅移动视图）— 私家车首末步行时间固定为“-”，其他数据照常计算。</p>
+    <p class="subtitle">点击地图选择<strong>起点</strong>（显示起终点图标+连线）/ 搜索栏可精准定位地图位置 — 私家车步行时间显示“-”</p>
     
     <div class="status-indicator" style="margin-bottom: 15px;">
         <span id="status-dot" class="status-dot status-info"></span>
         <span id="status-text">等待连接</span>
     </div>
     
-    <!-- 输入区域：起点、终点、出发时刻（已移除私家车停车耗时输入） -->
+    <!-- 输入区域：起点、终点、出发时刻 -->
     <div class="input-section">
         <div class="input-group">
             <label for="start">📍 起点位置 (点击地图选择)</label>
@@ -324,7 +323,6 @@
                     <input type="radio" name="destination" value="railway" style="width: auto;"> 上海虹桥火车站
                 </div>
             </div>
-            <!-- 注：私家车停车耗时不再需要，表格中直接显示“-” -->
         </div>
         <button id="calculate-btn" onclick="calculate()">
             <span>🚀</span><span>开始计算对比</span>
@@ -332,24 +330,24 @@
     </div>
     
     <div class="api-info">
-        <strong>🔧 实时数据来源：</strong> 高德地图路径规划API。私家车“首/末步行时间”因不涉及步行，固定显示“-”。
+        <strong>🔧 实时数据来源：</strong> 高德地图路径规划API。私家车“首/末步行时间”固定显示“-”，其他方式基于API精确计算。
     </div>
     
-    <!-- 地图区域：内置搜索定位栏 -->
+    <!-- 地图区域：内置搜索定位栏（已修复定位功能） -->
     <div id="map" class="map-container">
         <div class="map-search-bar">
-            <input type="text" id="map-search-input" placeholder="🔍 输入地名快速定位地图 (例如：人民广场)" autocomplete="off">
+            <input type="text" id="map-search-input" placeholder="🔍 输入地名快速定位地图 (例如：虹桥火车站)" autocomplete="off">
             <button id="map-search-btn">定位</button>
         </div>
         <div id="suggest-list" class="suggest-list"></div>
-        <div class="map-tip">🗺️ 点击地图任意位置设为起点 | 搜索栏仅移动视角，不改变起点</div>
+        <div class="map-tip">🗺️ 点击地图任意位置设为起点（显示蓝色起图标） | 搜索栏可移动地图视角</div>
     </div>
     
     <!-- 结果表格 -->
     <div id="results">
         <h2 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
             <span>📊 交通方式对比结果</span>
-            <span style="font-size: 14px; font-weight: normal; color: #666;">（私家车步行时间显示“-”，无需输入）</span>
+            <span style="font-size: 14px; font-weight: normal; color: #666;">（私家车步行时间显示“-”）</span>
         </h2>
         <table class="results-table">
             <thead>
@@ -368,9 +366,10 @@
         </table>
         <div style="margin-top: 25px; padding: 18px; background: #f8f9fa; border-radius: 8px; font-size: 14px;">
             <strong>📐 测算说明：</strong><br>
-            • 首/末步行时间 = 出发地到上车点 + 下车点到目的地步行分钟数 (私家车直接显示“-”，表示无步行或停车耗时不计入)。<br>
+            • 首/末步行时间 = 出发地到上车点 + 下车点到目的地步行分钟数 (私家车直接显示“-”)。<br>
             • 车内乘车时间 = 纯在交通工具上的时间 (地铁/公交取自API分段累加，驾车取自导航duration)。<br>
-            • 换乘次数 = 线路/交通方式转换次数 (含地铁内换乘及组合方式换乘)。
+            • 换乘次数 = 线路/交通方式转换次数 (含地铁内换乘及组合方式换乘)。<br>
+            • 地图显示起点(蓝)、终点(红)及连线，搜索栏可正确定位。
         </div>
     </div>
 </div>
@@ -385,6 +384,7 @@
     let placeSearch = null;
     
     let currentStartLngLat = null;
+    let currentStartAddress = '';
     const destinations = {
         airport: { name: "上海虹桥机场", coords: [121.327, 31.195] },
         railway: { name: "上海虹桥火车站", coords: [121.320, 31.194] }
@@ -394,7 +394,10 @@
     
     let isCalculating = false;
     let lastSuccessfulAPIResponse = { driving: null, transit: null };
-    let tempLocateMarker = null;
+    let tempLocateMarker = null;      // 搜索定位的紫色标记
+    let startMarker = null;           // 起点标记
+    let endMarker = null;            // 终点标记
+    let polyline = null;            // 连线
     
     // ==================== 状态提示 ====================
     function updateStatus(message, type = 'info') {
@@ -405,6 +408,7 @@
             statusDot.className = 'status-dot';
             statusDot.classList.add(`status-${type}`);
         }
+        console.log(`[状态] ${message}`);
     }
     
     // ==================== 目的地选择 ====================
@@ -413,34 +417,109 @@
         currentEndLngLat = destinations[type].coords;
         document.querySelectorAll('.destination-option').forEach(opt => opt.classList.remove('active'));
         document.getElementById(`destination-${type}`).classList.add('active');
+        
+        // 更新地图上的终点和连线
         if (map) {
-            updateEndMarker();
-            if (currentStartLngLat) updateStartMarker({ lng: currentStartLngLat[0], lat: currentStartLngLat[1] });
+            updateMapMarkers();
+            if (currentStartLngLat) {
+                setTimeout(() => calculate(), 300);
+            }
         }
-        if (currentStartLngLat) setTimeout(() => calculate(), 300);
     };
+    
+    // ==================== 统一更新地图标记（起点、终点、连线）====================
+    function updateMapMarkers() {
+        if (!map) return;
+        
+        // 清除现有的起点、终点标记和连线（但保留临时定位标记）
+        if (startMarker) startMarker.setMap(null);
+        if (endMarker) endMarker.setMap(null);
+        if (polyline) polyline.setMap(null);
+        
+        // 添加终点标记（红色）
+        endMarker = new AMap.Marker({
+            position: currentEndLngLat,
+            map: map,
+            title: destinations[currentDestination].name,
+            content: '<div style="background: #dc3545; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">终</div>',
+            zIndex: 100
+        });
+        
+        // 如果有起点，添加起点标记和连线
+        if (currentStartLngLat) {
+            // 起点标记（蓝色）
+            startMarker = new AMap.Marker({
+                position: currentStartLngLat,
+                map: map,
+                title: '起点',
+                content: '<div style="background: #007bff; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">起</div>',
+                zIndex: 200
+            });
+            
+            // 绘制连线
+            polyline = new AMap.Polyline({
+                path: [currentStartLngLat, currentEndLngLat],
+                strokeColor: "#007bff", 
+                strokeWeight: 4, 
+                strokeOpacity: 0.7,
+                lineJoin: 'round',
+                strokeStyle: 'solid',
+                map: map
+            });
+            
+            // 自适应视野
+            map.setFitView([startMarker, endMarker]);
+        }
+        
+        // 恢复临时定位标记（如果有）
+        if (tempLocateMarker) {
+            tempLocateMarker.setMap(map);
+        }
+    }
     
     // ==================== 地图初始化 ====================
     function initMap() {
-        if (typeof AMap === 'undefined') { updateStatus('高德API加载失败', 'error'); return; }
+        if (typeof AMap === 'undefined') { 
+            updateStatus('高德API加载失败', 'error'); 
+            return; 
+        }
+        
         try {
-            map = new AMap.Map('map', { zoom: 11, center: [121.3, 31.2], viewMode: '2D', resizeEnable: true });
-            geocoder = new AMap.Geocoder({ city: "全国", radius: 1000 });
+            map = new AMap.Map('map', { 
+                zoom: 11, 
+                center: [121.3, 31.2], 
+                viewMode: '2D', 
+                resizeEnable: true,
+                mapStyle: 'normal'
+            });
             
+            geocoder = new AMap.Geocoder({ city: "上海", radius: 1000 });
+            
+            // 添加控件
             map.addControl(new AMap.ToolBar());
             map.addControl(new AMap.Scale());
             
-            updateEndMarker();
-            map.on('click', function(e) { handleMapClick(e.lnglat); });
+            // 初始化终点标记
+            updateMapMarkers();
             
-            // 搜索定位功能
+            // 地图点击选择起点
+            map.on('click', function(e) { 
+                handleMapClick(e.lnglat); 
+            });
+            
+            // ===== 修复搜索定位功能：确保插件加载完成后再初始化 =====
             AMap.plugin(['AMap.Autocomplete', 'AMap.PlaceSearch'], function() {
+                updateStatus('搜索插件加载成功', 'success');
+                
+                // 初始化Autocomplete
                 autoComplete = new AMap.Autocomplete({
                     input: 'map-search-input',
                     city: '上海',
                     citylimit: true,
                     outPutDirAuto: false
                 });
+                
+                // 初始化PlaceSearch
                 placeSearch = new AMap.PlaceSearch({
                     city: '上海',
                     map: map,
@@ -448,108 +527,102 @@
                     autoFitView: true
                 });
                 
+                // 监听选项选中事件
                 AMap.event.addListener(autoComplete, 'select', function(e) {
                     const poi = e.poi;
+                    // 执行地点搜索并定位
                     placeSearch.search(poi.name, function(status, result) {
                         if (status === 'complete' && result.poiList.pois.length > 0) {
-                            const location = result.poiList.pois[0].location;
-                            map.setZoom(15);
-                            map.setCenter(location);
-                            if (tempLocateMarker) tempLocateMarker.setMap(null);
+                            const poiLocation = result.poiList.pois[0].location;
+                            // 移动地图中心
+                            map.setZoom(16);
+                            map.setCenter(poiLocation);
+                            
+                            // 添加或更新紫色定位标记
+                            if (tempLocateMarker) {
+                                tempLocateMarker.setMap(null);
+                            }
                             tempLocateMarker = new AMap.Marker({
-                                position: [location.lng, location.lat],
+                                position: [poiLocation.lng, poiLocation.lat],
                                 map: map,
-                                content: '<div style="background: #9c27b0; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">🔍</div>',
+                                title: poi.name,
+                                content: '<div style="background: #9c27b0; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">🔍</div>',
                                 zIndex: 180
                             });
+                            
+                            updateStatus(`已定位至: ${poi.name}`, 'success');
                         }
                     });
                 });
-            });
-            
-            document.getElementById('map-search-btn').addEventListener('click', function() {
-                const keyword = document.getElementById('map-search-input').value.trim();
-                if (!keyword) return;
-                if (placeSearch) {
-                    placeSearch.search(keyword, function(status, result) {
-                        if (status === 'complete' && result.poiList.pois.length > 0) {
-                            const poi = result.poiList.pois[0];
-                            map.setZoom(15);
-                            map.setCenter(poi.location);
-                            if (tempLocateMarker) tempLocateMarker.setMap(null);
-                            tempLocateMarker = new AMap.Marker({
-                                position: [poi.location.lng, poi.location.lat],
-                                map: map,
-                                content: '<div style="background: #9c27b0; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">🔍</div>',
-                                zIndex: 180
-                            });
-                        } else {
-                            alert('未找到该地点，请尝试更具体的名称');
-                        }
-                    });
-                }
+                
+                // 搜索按钮点击事件
+                document.getElementById('map-search-btn').onclick = function() {
+                    const keyword = document.getElementById('map-search-input').value.trim();
+                    if (!keyword) {
+                        alert('请输入搜索关键词');
+                        return;
+                    }
+                    
+                    if (placeSearch) {
+                        placeSearch.search(keyword, function(status, result) {
+                            if (status === 'complete' && result.poiList.pois.length > 0) {
+                                const poi = result.poiList.pois[0];
+                                map.setZoom(16);
+                                map.setCenter(poi.location);
+                                
+                                if (tempLocateMarker) {
+                                    tempLocateMarker.setMap(null);
+                                }
+                                tempLocateMarker = new AMap.Marker({
+                                    position: [poi.location.lng, poi.location.lat],
+                                    map: map,
+                                    content: '<div style="background: #9c27b0; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">🔍</div>',
+                                    zIndex: 180
+                                });
+                                
+                                updateStatus(`已定位至: ${poi.name}`, 'success');
+                            } else {
+                                alert('未找到该地点，请尝试更具体的名称');
+                            }
+                        });
+                    }
+                };
             });
             
             updateStatus('地图就绪，点击选择起点 / 搜索定位', 'success');
+            
         } catch (e) {
-            console.error(e);
-            updateStatus('地图初始化失败', 'error');
+            console.error('地图初始化异常:', e);
+            updateStatus('地图初始化失败: ' + e.message, 'error');
         }
     }
     
-    // ==================== 地图标记管理 ====================
-    function updateEndMarker() {
-        if (!map) return;
-        map.clearMap();
-        new AMap.Marker({
-            position: currentEndLngLat,
-            map: map,
-            content: '<div style="background: #dc3545; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">终</div>',
-            zIndex: 100
-        });
-        if (currentStartLngLat) {
-            updateStartMarker({ lng: currentStartLngLat[0], lat: currentStartLngLat[1] });
-        }
-        if (tempLocateMarker) tempLocateMarker.setMap(map);
-    }
-    
-    function updateStartMarker(lnglat) {
-        if (!map) return;
-        map.clearMap();
-        updateEndMarker();
-        new AMap.Marker({
-            position: [lnglat.lng, lnglat.lat],
-            map: map,
-            content: '<div style="background: #007bff; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">起</div>',
-            zIndex: 200
-        });
-        new AMap.Polyline({
-            path: [[lnglat.lng, lnglat.lat], currentEndLngLat],
-            strokeColor: "#007bff", strokeWeight: 3, strokeOpacity: 0.6, map: map
-        });
-        if (tempLocateMarker) tempLocateMarker.setMap(map);
-        map.setFitView([new AMap.LngLat(lnglat.lng, lnglat.lat), new AMap.LngLat(currentEndLngLat[0], currentEndLngLat[1])]);
-    }
-    
+    // ==================== 地图点击处理 ====================
     function handleMapClick(lnglat) {
         currentStartLngLat = [lnglat.lng, lnglat.lat];
         document.getElementById('start').value = '正在获取地址...';
+        
         if (geocoder) {
             geocoder.getAddress([lnglat.lng, lnglat.lat], function(status, result) {
                 if (status === 'complete' && result.info === 'OK') {
                     let addr = result.regeocode.formattedAddress;
-                    if (addr.length > 25) addr = addr.substring(0,22)+'...';
+                    currentStartAddress = addr;
+                    if (addr.length > 30) addr = addr.substring(0, 27) + '...';
                     document.getElementById('start').value = addr;
                 } else {
-                    document.getElementById('start').value = lnglat.lng.toFixed(4)+', '+lnglat.lat.toFixed(4);
+                    document.getElementById('start').value = lnglat.lng.toFixed(6) + ', ' + lnglat.lat.toFixed(6);
                 }
-                updateStartMarker(lnglat);
-                setTimeout(() => calculate(), 400);
+                
+                // 更新地图标记（起点、终点、连线）
+                updateMapMarkers();
+                
+                // 自动计算
+                setTimeout(() => calculate(), 300);
             });
         } else {
-            document.getElementById('start').value = lnglat.lng.toFixed(4)+', '+lnglat.lat.toFixed(4);
-            updateStartMarker(lnglat);
-            setTimeout(() => calculate(), 400);
+            document.getElementById('start').value = lnglat.lng.toFixed(6) + ', ' + lnglat.lat.toFixed(6);
+            updateMapMarkers();
+            setTimeout(() => calculate(), 300);
         }
     }
     
@@ -557,15 +630,18 @@
     async function callAmapAPI(apiType, params) {
         const baseURL = 'https://restapi.amap.com/v3/direction/';
         let url = '';
+        
         if (apiType === 'driving') {
             url = `${baseURL}driving?origin=${params.start[0]},${params.start[1]}&destination=${params.end[0]},${params.end[1]}&key=${AMAP_WEB_SERVICE_KEY}&strategy=0`;
         } else if (apiType === 'transit') {
             url = `${baseURL}transit/integrated?origin=${params.start[0]},${params.start[1]}&destination=${params.end[0]},${params.end[1]}&key=${AMAP_WEB_SERVICE_KEY}&city=上海&strategy=0`;
         }
+        
         try {
             const resp = await fetch(url);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const data = await resp.json();
+            
             if (data.status === "1") {
                 lastSuccessfulAPIResponse[apiType] = data;
                 return { success: true, data };
@@ -588,14 +664,18 @@
         let totalWalkDistance = 0;
         let totalRideMinutes = 0;
         let transfers = 0;
+        
         if (transitData && transitData.route && transitData.route.transits && transitData.route.transits.length > 0) {
             const bestTransit = transitData.route.transits[0];
             transfers = bestTransit.transfers || 0;
+            
             if (bestTransit.segments) {
                 bestTransit.segments.forEach(seg => {
-                    if (seg.walking) totalWalkDistance += seg.walking.distance || 0;
-                    if (seg.bus) {
-                        totalRideMinutes += (seg.bus.buslines?.[0]?.duration || 0) / 60;
+                    if (seg.walking) {
+                        totalWalkDistance += seg.walking.distance || 0;
+                    }
+                    if (seg.bus && seg.bus.buslines && seg.bus.buslines.length > 0) {
+                        totalRideMinutes += (seg.bus.buslines[0].duration || 0) / 60;
                     }
                     if (seg.railway) {
                         totalRideMinutes += (seg.railway.duration || 0) / 60;
@@ -608,11 +688,16 @@
     
     // ========== 主计算 ==========
     async function calculate() {
-        if (!currentStartLngLat) { alert("请先在地图上点击选择起点"); return; }
+        if (!currentStartLngLat) { 
+            alert("请先在地图上点击选择起点"); 
+            return; 
+        }
         if (isCalculating) return;
+        
         isCalculating = true;
         const btn = document.getElementById('calculate-btn');
-        btn.disabled = true; btn.innerHTML = '<span>🔄</span><span>计算中…</span>';
+        btn.disabled = true; 
+        btn.innerHTML = '<span>🔄</span><span>计算中…</span>';
         document.getElementById('results-body').innerHTML = `<tr><td colspan="6" class="loading"><div class="spinner"></div><div>调用高德API，解析步行/乘车时间…</div></td></tr>`;
         
         try {
@@ -652,22 +737,27 @@
                 transitTransfers = Math.min(2, Math.floor(straight / 12));
             }
             
-            // 生成所有交通方式数据（私家车步行时间直接设为"-"）
+            // 生成所有交通方式数据（私家车步行时间固定为"-"）
             const transportData = generateOptimizedData({
                 drivingDist, drivingDur,
                 transitWalkDist, transitRideMin, transitTransfers,
-                hour, minute,
-                start, end
+                hour, minute
             });
             
             updateDisplay(transportData);
             updateStatus('计算完成', 'success');
+            
         } catch (e) {
-            console.error(e);
-            document.getElementById('results-body').innerHTML = `<tr><td colspan="6" style="color:#dc3545; padding:40px;">❌ 计算异常: ${e.message}</td></tr>`;
-            updateStatus('计算失败', 'error');
+            console.error('计算异常:', e);
+            document.getElementById('results-body').innerHTML = `<tr><td colspan="6" style="color:#dc3545; padding:40px; text-align:center;">
+                <div style="font-size:32px; margin-bottom:15px;">❌</div>
+                <strong style="font-size:16px;">计算异常: ${e.message}</strong><br>
+                <span style="font-size:14px; color:#666;">请检查网络或稍后重试</span>
+                </td></tr>`;
+            updateStatus('计算失败: ' + e.message, 'error');
         } finally {
-            btn.disabled = false; btn.innerHTML = '<span>🚀</span><span>开始计算对比</span>';
+            btn.disabled = false; 
+            btn.innerHTML = '<span>🚀</span><span>开始计算对比</span>';
             isCalculating = false;
         }
     }
@@ -675,37 +765,67 @@
     // 直线距离辅助
     function calculateDistance(lnglat1, lnglat2) {
         const R = 6371;
-        const lat1 = lnglat1[1]*Math.PI/180, lat2 = lnglat2[1]*Math.PI/180;
-        const dLat = (lnglat2[1]-lnglat1[1])*Math.PI/180;
-        const dLng = (lnglat2[0]-lnglat1[0])*Math.PI/180;
-        const a = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const lat1 = lnglat1[1] * Math.PI / 180;
+        const lat2 = lnglat2[1] * Math.PI / 180;
+        const dLat = (lnglat2[1] - lnglat1[1]) * Math.PI / 180;
+        const dLng = (lnglat2[0] - lnglat1[0]) * Math.PI / 180;
+        
+        const a = Math.sin(dLat/2) ** 2 + 
+                  Math.cos(lat1) * Math.cos(lat2) * 
+                  Math.sin(dLng/2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
     }
     
-    // ========== 生成每种方式的详细参数（私家车步行时间固定为"-"） ==========
-    function generateOptimizedData({ drivingDist, drivingDur, transitWalkDist, transitRideMin, transitTransfers, hour, minute, start, end }) {
+    // ========== 生成每种方式的详细参数（修复栈溢出问题）==========
+    function generateOptimizedData({ drivingDist, drivingDur, transitWalkDist, transitRideMin, transitTransfers, hour, minute }) {
         const walkSpeed = 80; // 米/分钟
         const baseWalkMin = Math.ceil(transitWalkDist / walkSpeed);
         
-        // 候车时间（复用原有逻辑）
-        function waitTime(mode, dist) {
+        // 候车时间 - 修复：不再递归调用自身，直接返回数值
+        function getWaitTime(mode, dist) {
+            // 私家车无候车时间
             if (mode === '私家车') return '0分钟';
-            if (mode.includes('地铁')) return waitTime('地铁', dist);
-            const base = { '出租车':5,'网约车':6,'地铁':4,'公交车':10,'共享单车':1 };
-            let w = base[mode] || 5;
-            if ((hour>=7&&hour<9)||(hour>=17&&hour<19)) w+=2;
-            if (mode==='公交车' && dist>15) w+=5;
-            if (mode==='共享单车' && (hour>=7&&hour<9)) w+=1;
-            return Math.max(1, Math.round(w + (Math.random()*2-1))) + '分钟';
+            
+            // 基础候车时间（分钟）
+            let wait = 0;
+            switch(mode) {
+                case '出租车': wait = 5; break;
+                case '网约车': wait = 6; break;
+                case '地铁': wait = 4; break;
+                case '公交车': wait = 10; break;
+                case '共享单车': wait = 1; break;
+                default: 
+                    // 组合方式默认使用地铁候车时间
+                    if (mode.includes('地铁')) wait = 4;
+                    else wait = 5;
+            }
+            
+            // 时段影响
+            if ((hour >= 7 && hour < 9) || (hour >= 17 && hour < 19)) {
+                wait += 2;
+            }
+            
+            // 公交特殊
+            if (mode === '公交车' && dist > 15) wait += 5;
+            
+            // 随机波动 ±1 分钟
+            wait = Math.max(1, Math.round(wait + (Math.random() * 2 - 1)));
+            
+            return wait + '分钟';
         }
         
         // --- 步行时间（首末）---
         const taxiWalk = 0;
         const rideHailWalk = 0;
-        // 私家车步行时间固定显示"-"（不涉及步行/停车耗时）
-        const privateCarWalk = "-";
+        const privateCarWalk = "-";  // 固定显示横线
         
-        const bikeWalk = drivingDist <= 8 ? (drivingDist > 5 ? 3 : 2) : 0; // 共享单车找车停车
+        // 共享单车找车停车时间
+        let bikeWalk = 0;
+        if (drivingDist <= 8) {
+            bikeWalk = drivingDist > 5 ? 3 : 2;
+        }
+        
         const metroBikeWalk = Math.max(2, Math.ceil(baseWalkMin * 0.4));
         const metroTaxiWalk = baseWalkMin;
         const metroRideWalk = baseWalkMin;
@@ -717,7 +837,7 @@
         const metroRide = transitRideMin || Math.round(drivingDist * 2.2);
         const busRide = Math.round((transitRideMin || drivingDist * 2.5) * 1.2);
         const bikeRide = drivingDist <= 8 ? Math.round(drivingDist * 4) : null;
-        const metroBikeRide = metroRide + (drivingDist<=8 ? Math.round(drivingDist*3) : 15);
+        const metroBikeRide = metroRide + (drivingDist <= 8 ? Math.round(drivingDist * 3) : 15);
         const metroTaxiRide = metroRide + Math.round(drivingDur * 0.3);
         const metroRideHailRide = metroRide + Math.round(drivingDur * 0.3);
         
@@ -728,28 +848,30 @@
         const metroTaxiTransfer = metroTransfer + 1;
         const metroRideHailTransfer = metroTransfer + 1;
         
-        // --- 费用估算（沿用之前逻辑）---
+        // --- 费用估算 ---
         function taxiCost(d, h) {
-            let c = 14; if (d>3) c+= (Math.min(d,15)-3)*2.5; if(d>15) c+= (d-15)*3.6;
-            if ((h>=7&&h<9)||(h>=17&&h<19)) c*=1.2;
+            let c = 14; 
+            if (d > 3) c += (Math.min(d, 15) - 3) * 2.5; 
+            if (d > 15) c += (d - 15) * 3.6;
+            if ((h >= 7 && h < 9) || (h >= 17 && h < 19)) c *= 1.2;
             return Math.round(c);
         }
+        
         const taxiPrice = taxiCost(drivingDist, hour);
         const ridePrice = Math.round(taxiPrice * 0.85);
-        const privatePrice = Math.round(drivingDist * 0.8 + (currentDestination==='airport'?20:15));
-        const metroPrice = Math.max(3, Math.round(transitWalkDist/1000 * 0.3 + 3));
+        const privatePrice = Math.round(drivingDist * 0.8 + (currentDestination === 'airport' ? 20 : 15));
+        const metroPrice = Math.max(3, Math.round(transitWalkDist / 1000 * 0.3 + 3));
         const busPrice = Math.max(2, Math.round(metroPrice * 0.7));
-        const bikePrice = drivingDist<=8 ? Math.max(1.5, Math.round(drivingDist*0.8)) : '-';
+        const bikePrice = drivingDist <= 8 ? Math.max(1.5, Math.round(drivingDist * 0.8)) : '-';
         const metroBikePrice = metroPrice + 1.5;
         const metroTaxiPrice = metroPrice + 12;
         const metroRidePrice = metroPrice + 10;
         
-        const distStr = (d)=> d.toFixed(1)+'公里';
+        const distStr = (d) => d.toFixed(1) + '公里';
         
         return {
-            // 严格按照需求顺序
             "出租车": {
-                wait: waitTime('出租车', drivingDist),
+                wait: getWaitTime('出租车', drivingDist),
                 walkTime: taxiWalk + '分钟',
                 rideTime: taxiRide + '分钟',
                 transfer: 0,
@@ -757,7 +879,7 @@
                 dist: distStr(drivingDist)
             },
             "网约车": {
-                wait: waitTime('网约车', drivingDist),
+                wait: getWaitTime('网约车', drivingDist),
                 walkTime: rideHailWalk + '分钟',
                 rideTime: rideHailRide + '分钟',
                 transfer: 0,
@@ -765,60 +887,60 @@
                 dist: distStr(drivingDist)
             },
             "私家车": {
-                wait: waitTime('私家车', drivingDist),
-                walkTime: privateCarWalk,            // 直接显示 "-"
+                wait: getWaitTime('私家车', drivingDist),
+                walkTime: privateCarWalk,
                 rideTime: privateRide + '分钟',
                 transfer: 0,
                 cost: privatePrice + '元',
                 dist: distStr(drivingDist)
             },
             "地铁": {
-                wait: waitTime('地铁', drivingDist),
+                wait: getWaitTime('地铁', drivingDist),
                 walkTime: baseWalkMin + '分钟',
                 rideTime: metroRide + '分钟',
                 transfer: metroTransfer,
                 cost: metroPrice + '元',
-                dist: distStr(transitWalkDist/1000)
+                dist: distStr(transitWalkDist / 1000)
             },
             "公交车": {
-                wait: waitTime('公交车', drivingDist),
+                wait: getWaitTime('公交车', drivingDist),
                 walkTime: baseWalkMin + '分钟',
                 rideTime: busRide + '分钟',
                 transfer: busTransfer,
                 cost: busPrice + '元',
-                dist: distStr(transitWalkDist/1000 * 1.2)
+                dist: distStr(transitWalkDist / 1000 * 1.2)
             },
             "共享单车": {
-                wait: waitTime('共享单车', drivingDist),
+                wait: getWaitTime('共享单车', drivingDist),
                 walkTime: bikeWalk + '分钟',
-                rideTime: bikeRide ? bikeRide+'分钟' : '不建议骑行',
+                rideTime: bikeRide ? bikeRide + '分钟' : '不建议骑行',
                 transfer: 0,
-                cost: bikePrice === '-' ? '-' : bikePrice+'元',
-                dist: drivingDist<=8 ? distStr(drivingDist) : '-'
+                cost: bikePrice === '-' ? '-' : bikePrice + '元',
+                dist: drivingDist <= 8 ? distStr(drivingDist) : '-'
             },
             "地铁+共享单车": {
-                wait: waitTime('地铁+共享单车', drivingDist),
+                wait: getWaitTime('地铁+共享单车', drivingDist),
                 walkTime: metroBikeWalk + '分钟',
                 rideTime: metroBikeRide + '分钟',
                 transfer: metroBikeTransfer,
                 cost: metroBikePrice.toFixed(1) + '元',
-                dist: distStr(transitWalkDist/1000)
+                dist: distStr(transitWalkDist / 1000)
             },
             "地铁+出租车": {
-                wait: waitTime('地铁+出租车', drivingDist),
+                wait: getWaitTime('地铁+出租车', drivingDist),
                 walkTime: metroTaxiWalk + '分钟',
                 rideTime: metroTaxiRide + '分钟',
                 transfer: metroTaxiTransfer,
                 cost: metroTaxiPrice + '元',
-                dist: distStr(transitWalkDist/1000)
+                dist: distStr(transitWalkDist / 1000)
             },
             "地铁+网约车": {
-                wait: waitTime('地铁+网约车', drivingDist),
+                wait: getWaitTime('地铁+网约车', drivingDist),
                 walkTime: metroRideWalk + '分钟',
                 rideTime: metroRideHailRide + '分钟',
                 transfer: metroRideHailTransfer,
                 cost: metroRidePrice + '元',
-                dist: distStr(transitWalkDist/1000)
+                dist: distStr(transitWalkDist / 1000)
             }
         };
     }
@@ -827,22 +949,27 @@
     function updateDisplay(data) {
         const tbody = document.getElementById('results-body');
         tbody.innerHTML = '';
-        const order = ["出租车","网约车","私家车","地铁","公交车","共享单车","地铁+共享单车","地铁+出租车","地铁+网约车"];
+        
+        const order = ["出租车", "网约车", "私家车", "地铁", "公交车", "共享单车", "地铁+共享单车", "地铁+出租车", "地铁+网约车"];
         const icons = {
-            "出租车":"🚕","网约车":"🚗","私家车":"🚙","地铁":"🚇","公交车":"🚌","共享单车":"🚲",
-            "地铁+共享单车":"🚇+🚲","地铁+出租车":"🚇+🚕","地铁+网约车":"🚇+🚗"
+            "出租车": "🚕", "网约车": "🚗", "私家车": "🚙", "地铁": "🚇", 
+            "公交车": "🚌", "共享单车": "🚲",
+            "地铁+共享单车": "🚇+🚲", "地铁+出租车": "🚇+🚕", "地铁+网约车": "🚇+🚗"
         };
+        
         order.forEach(mode => {
             if (data[mode]) {
                 const d = data[mode];
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td style="font-weight: bold;"><span class="transport-icon">${icons[mode]}</span>${mode}</td>
+                    <td style="font-weight: bold; text-align: left;">
+                        <span class="transport-icon">${icons[mode]}</span>${mode}
+                    </td>
                     <td>${d.wait}</td>
-                    <td style="color: #e67e22; font-weight:500;">${d.walkTime}</td>
-                    <td style="color: #007bff; font-weight:500;">${d.rideTime}</td>
+                    <td style="color: #e67e22; font-weight: 500;">${d.walkTime}</td>
+                    <td style="color: #007bff; font-weight: 500;">${d.rideTime}</td>
                     <td>${d.transfer}</td>
-                    <td style="color: #28a745; font-weight:500;">${d.cost}</td>
+                    <td style="color: #28a745; font-weight: 500;">${d.cost}</td>
                 `;
                 tbody.appendChild(row);
             }
@@ -852,7 +979,16 @@
     // ========== 页面启动 ==========
     window.onload = function() {
         updateStatus('初始化地图…');
-        setTimeout(() => initMap(), 600);
+        
+        // 确保高德API已加载
+        if (typeof AMap !== 'undefined') {
+            setTimeout(() => initMap(), 300);
+        } else {
+            // 监听API加载
+            window.addEventListener('load', function() {
+                setTimeout(() => initMap(), 500);
+            });
+        }
         
         // 出发时刻变化重新计算
         document.getElementById('departure-time').addEventListener('change', function() {
